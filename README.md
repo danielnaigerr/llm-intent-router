@@ -19,9 +19,10 @@ Worth knowing before you spend time on setup:
   offline mode, and no mock provider. `packages/server/llm/client.ts` talks to
   the OpenAI API and nothing else. Without a funded key, the chat endpoint, math
   word problems, review analysis and review summarization all fail.
-- **A MySQL database is required.** The server imports the generated Prisma
-  client at startup, so `prisma generate` has to run even if you only care about
-  the chatbot.
+- **`prisma generate` has to run** even if you only care about the chatbot — the
+  server imports the generated client at startup and will not boot without it. A
+  *running* MySQL server is needed only for the `/api/products/...` routes; the
+  chat endpoint works fine without one.
 - **There is no seed data.** The `products` and `reviews` tables ship empty, so
   `/api/products/:id/reviews` returns `Product does not exist` until you insert
   rows yourself.
@@ -219,7 +220,9 @@ being explicit about:
   between system and user roles in the classifier and general-chat prompts, so
   the app is exposed to prompt injection.
 - **No timeout, retry or rate-limit handling** around OpenAI calls. When the API
-  fails, the user sees a generic `Something went wrong, try again!`.
+  fails the user sees a generic `Something went wrong, try again!`, and
+  `chat.controller.ts` catches the error without logging it — so nothing records
+  what actually went wrong.
 - **`ReviewList` is never rendered.** The reviews UI was built and wired to the
   API, but `App.tsx` mounts only `<ChatBot />`. The component compiles and is dead.
 - **`chat.service.ts`, `conversation.repository.ts` and `prompts/classifier.txt`
