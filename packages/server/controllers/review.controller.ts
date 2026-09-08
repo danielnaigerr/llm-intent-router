@@ -12,19 +12,24 @@ export const reviewController = {
          return;
       }
 
-      const product = await productRepository.getProduct(productId);
-      if (!product) {
-         res.status(400).json({ error: 'Product does not exist.' });
-         return;
+      try {
+         const product = await productRepository.getProduct(productId);
+         if (!product) {
+            res.status(400).json({ error: 'Product does not exist.' });
+            return;
+         }
+
+         const reviews = await reviewRepository.getReviews(productId);
+         const summary = await reviewRepository.getReviewSummary(productId);
+
+         res.json({
+            summary,
+            reviews,
+         });
+      } catch (error) {
+         console.error('getReviews failed:', error);
+         res.status(500).json({ error: 'Failed to fetch reviews.' });
       }
-
-      const reviews = await reviewRepository.getReviews(productId);
-      const summary = await reviewRepository.getReviewSummary(productId);
-
-      res.json({
-         summary,
-         reviews,
-      });
    },
 
    async summarizeReviews(req: Request, res: Response) {
@@ -35,19 +40,26 @@ export const reviewController = {
          return;
       }
 
-      const product = await productRepository.getProduct(productId);
-      if (!product) {
-         res.status(400).json({ error: 'Invalid product' });
-         return;
-      }
+      try {
+         const product = await productRepository.getProduct(productId);
+         if (!product) {
+            res.status(400).json({ error: 'Invalid product' });
+            return;
+         }
 
-      const reviews = await reviewRepository.getReviews(productId, 1);
-      if (!reviews.length) {
-         res.status(400).json({ error: 'There are no reviews to Summarize.' });
-         return;
-      }
+         const reviews = await reviewRepository.getReviews(productId, 1);
+         if (!reviews.length) {
+            res.status(400).json({
+               error: 'There are no reviews to Summarize.',
+            });
+            return;
+         }
 
-      const summary = await reviewService.summarizeReviews(productId);
-      res.json({ summary });
+         const summary = await reviewService.summarizeReviews(productId);
+         res.json({ summary });
+      } catch (error) {
+         console.error('summarizeReviews failed:', error);
+         res.status(500).json({ error: 'Failed to summarize reviews.' });
+      }
    },
 };
